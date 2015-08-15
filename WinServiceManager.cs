@@ -233,6 +233,40 @@ namespace WinServMgr
                     mServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
             }
         }
+
+        private void dgvServicesList_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                if (e.RowIndex != -1 && e.ColumnIndex != -1)
+                {
+                    DataGridViewCell clickedCell = (sender as DataGridView).Rows[e.RowIndex].Cells[e.ColumnIndex];
+                    dgvServicesList.CurrentCell = clickedCell;
+
+                    string serviceName = GetServiceNameForRow(dgvServicesList.Rows[e.RowIndex]);
+                    var state = mServiceEntries.First(s => s.ServiceName == serviceName).ServiceState;
+
+                    ContextMenu cm = new ContextMenu();
+                    var mi = new MenuItem("Service stop");
+                    mi.Enabled = state != ServiceControllerStatus.Stopped;
+                    mi.Click += btnStopService_Click;
+                    cm.MenuItems.Add(mi);
+
+                    mi = new MenuItem("Service start");
+                    mi.Enabled = state != ServiceControllerStatus.Running;
+                    mi.Click += btnStartService_Click;
+                    cm.MenuItems.Add(mi);
+
+                    mi = new MenuItem("Service restart");
+                    mi.Enabled = state != ServiceControllerStatus.Stopped;
+                    mi.Click += btnRestartService_Click;
+                    cm.MenuItems.Add(mi);
+
+                    var relativeMousePosition = dgvServicesList.PointToClient(Cursor.Position);
+                    cm.Show(dgvServicesList, relativeMousePosition);
+                }
+            }
+        }
     }
 
     public class ServiceEntry
@@ -247,6 +281,17 @@ namespace WinServMgr
         {
             ServiceName = name;
             ServiceState = state;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return ServiceName == (obj as ServiceEntry).ServiceName
+                && ServiceState == (obj as ServiceEntry).ServiceState;
+        }
+
+        public override int GetHashCode()
+        {
+            return ServiceName.GetHashCode() ^ ServiceState.GetHashCode();
         }
     }
 }

@@ -47,6 +47,7 @@
             this.dgvServicesList.Name = "dgvServicesList";
             this.dgvServicesList.Size = new System.Drawing.Size(313, 520);
             this.dgvServicesList.TabIndex = 0;
+            this.dgvServicesList.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvServicesList_CellMouseClick);
             // 
             // btnRefresh
             // 
