@@ -43,6 +43,9 @@ namespace WinServMgr
 
         private void RefreshGrid()
         {
+            // 1. If filter is not applied, we show all services, otherwise those starting with text (case independently)
+            // 2. If checkbox "Show stopped services" in checked, we show them as well
+
             var filteredEntries = mServiceEntries.Where(s => 
                 (mFilterEmpty || s.ServiceName.StartsWith(txtFilter.Text, StringComparison.CurrentCultureIgnoreCase)) &&
                 (tbxShowStopped.Checked || s.ServiceState != ServiceControllerStatus.Stopped))
@@ -78,9 +81,12 @@ namespace WinServMgr
                 {
                     try
                     {
-                        string serviceName = GetSelectedService();
-                        ServiceController sc = new ServiceController(serviceName);
-                        sc.Stop();
+                        List<string> serviceNames = GetSelectedServices();
+                        serviceNames.AsParallel().ForAll(name =>
+                            {
+                                ServiceController sc = new ServiceController(name);
+                                sc.Stop();
+                            });
                     }
                     catch (Exception ex)
                     {
@@ -95,9 +101,12 @@ namespace WinServMgr
                 {
                     try
                     {
-                        string serviceName = GetSelectedService();
-                        ServiceController sc = new ServiceController(serviceName);
-                        sc.Start();
+                        List<string> serviceNames = GetSelectedServices();
+                        serviceNames.AsParallel().ForAll(name =>
+                            {
+                                ServiceController sc = new ServiceController(name);
+                                sc.Start();
+                            });
                     }
                     catch (Exception ex)
                     {
@@ -112,11 +121,14 @@ namespace WinServMgr
                 {
                     try
                     {
-                        string serviceName = GetSelectedService();
-                        ServiceController sc = new ServiceController(serviceName);
-                        sc.Stop();
-                        sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(60));
-                        sc.Start();
+                        List<string> serviceNames = GetSelectedServices();
+                        serviceNames.AsParallel().ForAll(name =>
+                            {
+                                ServiceController sc = new ServiceController(name);
+                                sc.Stop();
+                                sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(60));
+                                sc.Start();
+                            });
                     }
                     catch (Exception ex)
                     {
@@ -125,32 +137,35 @@ namespace WinServMgr
                 });
         }
 
-        private string GetSelectedService()
+        private List<string> GetSelectedServices()
         {
-            string serviceName = string.Empty;
+            var selectedServices = new List<string>();
             var selectedRows = dgvServicesList.SelectedRows;
             if (selectedRows.Count > 0)
             {
                 foreach (DataGridViewRow row in selectedRows)
                 {
-                    serviceName = row.Cells[dgvServicesList.Columns["ServiceName"].Index].Value as string;
+                    selectedServices.Add(GetServiceNameForRow(row));
                 }
             }
-            else
+
+            var selectedCells = dgvServicesList.SelectedCells;
+            if (selectedCells.Count > 0)
             {
-                var selectedCells = dgvServicesList.SelectedCells;
-                if (selectedCells.Count > 0)
+                foreach (DataGridViewCell cell in selectedCells)
                 {
-                    foreach (DataGridViewCell cell in selectedCells)
+                    if (cell.ColumnIndex == dgvServicesList.Columns["ServiceName"].Index)
                     {
-                        if (cell.ColumnIndex == dgvServicesList.Columns["ServiceName"].Index)
-                        {
-                            serviceName = cell.Value as string;
-                        }
+                        selectedServices.Add(cell.Value as string);
                     }
                 }
             }
-            return serviceName;
+            return selectedServices;
+        }
+
+        private string GetServiceNameForRow(DataGridViewRow row)
+        {
+            return row.Cells[dgvServicesList.Columns["ServiceName"].Index].Value as string;
         }
 
         private void SMATestTool_Load(object sender, EventArgs e)
@@ -218,7 +233,6 @@ namespace WinServMgr
                     mServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
             }
         }
-
     }
 
     public class ServiceEntry
