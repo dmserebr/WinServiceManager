@@ -36,6 +36,13 @@ namespace WinServMgr
 
         #region Public members
 
+        /// <summary>
+        /// Gets list of services that are selected in the grid view.
+        /// The service is considered as selected if:
+        /// 1. cell containing its name is selected
+        /// 2. row of service is selected
+        /// </summary>
+        /// <returns></returns>
         public List<string> GetSelectedServices()
         {
             var selectedServices = new List<string>();
@@ -72,9 +79,13 @@ namespace WinServMgr
             return selectedServices;
         }
 
+        /// <summary>
+        /// Shows a message box with the specified error message
+        /// </summary>
+        /// <param name="message">Message to be shown</param>
         public static void ShowError(string message)
         {
-            MessageBox.Show(message);
+            MessageBox.Show(message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         #endregion
@@ -227,6 +238,7 @@ namespace WinServMgr
         {
             if (e.Button == MouseButtons.Right)
             {
+                // -1 means header row / column
                 if (e.RowIndex != -1 && e.ColumnIndex != -1)
                 {
                     DataGridViewCell clickedCell = (sender as DataGridView).Rows[e.RowIndex].Cells[e.ColumnIndex];

@@ -19,6 +19,9 @@ namespace WinServMgr
 
         public List<ServiceEntry> ServiceEntries { get; set; }
 
+        /// <summary>
+        /// Gets the current status of services from the system.
+        /// </summary>
         public void UpdateServiceEntries()
         {
             ServiceEntries.Clear();
@@ -29,6 +32,11 @@ namespace WinServMgr
             }
         }
 
+        /// <summary>
+        /// Performs the specified action for selected service
+        /// </summary>
+        /// <param name="action">Action that needs to be done with service which name is an input param</param>
+        /// <param name="actionName">User-friendly name of the action (for error message)</param>
         public void PerformForSelected(Action<string> action, string actionName)
         {
             Task task = new Task(() =>
