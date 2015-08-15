@@ -16,7 +16,7 @@ namespace WinServMgr
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new WinServiceManager());
+            Application.Run(new MainForm());
         }
     }
 }

@@ -14,31 +14,79 @@ using System.Threading.Tasks;
 
 namespace WinServMgr
 {
-    public partial class WinServiceManager : Form
+    public partial class MainForm : Form
     {
-        public List<ServiceEntry> mServiceEntries;
-        public bool mFilterEmpty = true;
-        private const string InitialFilterText = "Filter...";
+        #region Private fields
 
-        public WinServiceManager()
+        private bool mFilterEmpty = true;
+        private SrvController mSrvController;
+        private const string InitialFilterText = "Filter..."; 
+        
+        #endregion
+
+        #region Construction
+
+        public MainForm()
         {
             InitializeComponent();
-        }
+            mSrvController = new SrvController(this);
+        } 
 
-        private List<ServiceEntry> GetWindowsServiceEntries()
+        #endregion
+
+        #region Public members
+
+        public List<string> GetSelectedServices()
         {
-            var services = ServiceController.GetServices();
-            var entries = from s in services
-                          select new ServiceEntry(s.ServiceName, s.Status);
-            return entries.ToList();
+            var selectedServices = new List<string>();
+
+            try
+            {
+                var selectedRows = dgvServicesList.SelectedRows;
+                if (selectedRows.Count > 0)
+                {
+                    foreach (DataGridViewRow row in selectedRows)
+                    {
+                        selectedServices.Add(GetServiceNameForRow(row));
+                    }
+                }
+
+                var selectedCells = dgvServicesList.SelectedCells;
+                if (selectedCells.Count > 0)
+                {
+                    foreach (DataGridViewCell cell in selectedCells)
+                    {
+                        if (cell.ColumnIndex == dgvServicesList.Columns["ServiceName"].Index)
+                        {
+                            selectedServices.Add(cell.Value as string);
+                        }
+                    }
+                }
+                return selectedServices;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Exception caught while getting selected services:\n" + ex.Message);
+            }
+
+            return selectedServices;
         }
 
+        public static void ShowError(string message)
+        {
+            MessageBox.Show(message);
+        }
+
+        #endregion
+
+        #region Private members
+        
         private void btnRefresh_Click(object sender, EventArgs e)
         {
-            mServiceEntries = GetWindowsServiceEntries();
+            mSrvController.UpdateServiceEntries();
             RefreshGrid();
             Text = string.Format("WinServiceManager [{0} active services]",
-                mServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
+                mSrvController.ServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
         }
 
         private void RefreshGrid()
@@ -46,7 +94,7 @@ namespace WinServMgr
             // 1. If filter is not applied, we show all services, otherwise those starting with text (case independently)
             // 2. If checkbox "Show stopped services" in checked, we show them as well
 
-            var filteredEntries = mServiceEntries.Where(s => 
+            var filteredEntries = mSrvController.ServiceEntries.Where(s =>
                 (mFilterEmpty || s.ServiceName.StartsWith(txtFilter.Text, StringComparison.CurrentCultureIgnoreCase)) &&
                 (tbxShowStopped.Checked || s.ServiceState != ServiceControllerStatus.Stopped))
                 .ToList();
@@ -77,90 +125,31 @@ namespace WinServMgr
 
         private void btnStopService_Click(object sender, EventArgs e)
         {
-            Task.Factory.StartNew(() =>
-                {
-                    try
-                    {
-                        List<string> serviceNames = GetSelectedServices();
-                        serviceNames.AsParallel().ForAll(name =>
-                            {
-                                ServiceController sc = new ServiceController(name);
-                                sc.Stop();
-                            });
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Exception caught while performing controlled stop:\n" + ex.Message);
-                    }
-                });
+            mSrvController.PerformForSelected(name =>
+            {
+                ServiceController sc = new ServiceController(name);
+                sc.Stop();
+            }, "controlled stop");
         }
 
         private void btnStartService_Click(object sender, EventArgs e)
         {
-            Task.Factory.StartNew(() =>
-                {
-                    try
-                    {
-                        List<string> serviceNames = GetSelectedServices();
-                        serviceNames.AsParallel().ForAll(name =>
-                            {
-                                ServiceController sc = new ServiceController(name);
-                                sc.Start();
-                            });
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Exception caught while performing controlled start:\n" + ex.Message);
-                    }
-                });
+            mSrvController.PerformForSelected(name =>
+            {
+                ServiceController sc = new ServiceController(name);
+                sc.Start();
+            }, "controlled start");
         }
 
         private void btnRestartService_Click(object sender, EventArgs e)
         {
-            Task.Factory.StartNew(() =>
-                {
-                    try
-                    {
-                        List<string> serviceNames = GetSelectedServices();
-                        serviceNames.AsParallel().ForAll(name =>
-                            {
-                                ServiceController sc = new ServiceController(name);
-                                sc.Stop();
-                                sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(60));
-                                sc.Start();
-                            });
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Exception caught while performing restart:\n" + ex.Message);
-                    }
-                });
-        }
-
-        private List<string> GetSelectedServices()
-        {
-            var selectedServices = new List<string>();
-            var selectedRows = dgvServicesList.SelectedRows;
-            if (selectedRows.Count > 0)
+            mSrvController.PerformForSelected(name =>
             {
-                foreach (DataGridViewRow row in selectedRows)
-                {
-                    selectedServices.Add(GetServiceNameForRow(row));
-                }
-            }
-
-            var selectedCells = dgvServicesList.SelectedCells;
-            if (selectedCells.Count > 0)
-            {
-                foreach (DataGridViewCell cell in selectedCells)
-                {
-                    if (cell.ColumnIndex == dgvServicesList.Columns["ServiceName"].Index)
-                    {
-                        selectedServices.Add(cell.Value as string);
-                    }
-                }
-            }
-            return selectedServices;
+                ServiceController sc = new ServiceController(name);
+                sc.Stop();
+                sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(60));
+                sc.Start();
+            }, "controlled restart");
         }
 
         private string GetServiceNameForRow(DataGridViewRow row)
@@ -170,10 +159,10 @@ namespace WinServMgr
 
         private void SMATestTool_Load(object sender, EventArgs e)
         {
-            mServiceEntries = GetWindowsServiceEntries();
+            mSrvController.UpdateServiceEntries();
             RefreshGrid();
-            Text = string.Format("WinServiceManager [{0} active services]", 
-                mServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
+            Text = string.Format("WinServiceManager [{0} active services]",
+                mSrvController.ServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
         }
 
         private void txtFilter_TextChanged(object sender, EventArgs e)
@@ -227,10 +216,10 @@ namespace WinServMgr
         {
             if (e.KeyCode == Keys.F5)
             {
-                mServiceEntries = GetWindowsServiceEntries();
+                mSrvController.UpdateServiceEntries();
                 RefreshGrid();
                 Text = string.Format("WinServiceManager [{0} active services]",
-                    mServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
+                    mSrvController.ServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
             }
         }
 
@@ -244,7 +233,7 @@ namespace WinServMgr
                     dgvServicesList.CurrentCell = clickedCell;
 
                     string serviceName = GetServiceNameForRow(dgvServicesList.Rows[e.RowIndex]);
-                    var state = mServiceEntries.First(s => s.ServiceName == serviceName).ServiceState;
+                    var state = mSrvController.ServiceEntries.First(s => s.ServiceName == serviceName).ServiceState;
 
                     ContextMenu cm = new ContextMenu();
                     var mi = new MenuItem("Service stop");
@@ -267,31 +256,7 @@ namespace WinServMgr
                 }
             }
         }
-    }
 
-    public class ServiceEntry
-    {
-        [DisplayName("Service name")] 
-        public string ServiceName {get; set;}
-
-        [DisplayName("Service state")] 
-        public ServiceControllerStatus ServiceState {get; set;}
-
-        public ServiceEntry(string name, ServiceControllerStatus state)
-        {
-            ServiceName = name;
-            ServiceState = state;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return ServiceName == (obj as ServiceEntry).ServiceName
-                && ServiceState == (obj as ServiceEntry).ServiceState;
-        }
-
-        public override int GetHashCode()
-        {
-            return ServiceName.GetHashCode() ^ ServiceState.GetHashCode();
-        }
+        #endregion
     }
 }
