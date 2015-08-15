@@ -43,12 +43,32 @@ namespace WinServMgr
 
         private void RefreshGrid()
         {
-            dgvServicesList.DataSource = mServiceEntries.Where(s => 
+            var filteredEntries = mServiceEntries.Where(s => 
                 (mFilterEmpty || s.ServiceName.StartsWith(txtFilter.Text, StringComparison.CurrentCultureIgnoreCase)) &&
                 (tbxShowStopped.Checked || s.ServiceState != ServiceControllerStatus.Stopped))
                 .ToList();
+            dgvServicesList.DataSource = filteredEntries;
 
             AdjustColumnsWidth();
+            foreach (DataGridViewRow row in dgvServicesList.Rows)
+            {
+                Color cellColor;
+                switch ((ServiceControllerStatus)row.Cells[dgvServicesList.Columns["ServiceState"].Index].Value)
+                {
+                    case ServiceControllerStatus.Running:
+                        cellColor = Color.Green;
+                        break;
+                    case ServiceControllerStatus.Stopped:
+                        cellColor = Color.Red;
+                        break;
+                    default:
+                        cellColor = Color.Gray;
+                        break;
+                }
+
+                row.HeaderCell.Style.BackColor = cellColor;
+                row.HeaderCell.Style.SelectionBackColor = cellColor;
+            }
             dgvServicesList.Refresh();
         }
 
@@ -178,6 +198,7 @@ namespace WinServMgr
 
         private void AdjustColumnsWidth()
         {
+            dgvServicesList.RowHeadersWidth = 12;
             dgvServicesList.Columns["ServiceState"].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
             dgvServicesList.Columns["ServiceName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         }
@@ -197,6 +218,7 @@ namespace WinServMgr
                     mServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
             }
         }
+
     }
 
     public class ServiceEntry

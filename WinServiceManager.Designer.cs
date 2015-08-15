@@ -42,16 +42,17 @@
             // dgvServicesList
             // 
             this.dgvServicesList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvServicesList.Location = new System.Drawing.Point(22, 67);
+            this.dgvServicesList.EnableHeadersVisualStyles = false;
+            this.dgvServicesList.Location = new System.Drawing.Point(20, 67);
             this.dgvServicesList.Name = "dgvServicesList";
-            this.dgvServicesList.Size = new System.Drawing.Size(299, 410);
+            this.dgvServicesList.Size = new System.Drawing.Size(313, 520);
             this.dgvServicesList.TabIndex = 0;
             // 
             // btnRefresh
             // 
-            this.btnRefresh.Location = new System.Drawing.Point(215, 13);
+            this.btnRefresh.Location = new System.Drawing.Point(227, 13);
             this.btnRefresh.Name = "btnRefresh";
-            this.btnRefresh.Size = new System.Drawing.Size(106, 27);
+            this.btnRefresh.Size = new System.Drawing.Size(106, 32);
             this.btnRefresh.TabIndex = 2;
             this.btnRefresh.Text = "Refresh (F5)";
             this.btnRefresh.UseVisualStyleBackColor = true;
@@ -59,9 +60,9 @@
             // 
             // btnStopService
             // 
-            this.btnStopService.Location = new System.Drawing.Point(23, 490);
+            this.btnStopService.Location = new System.Drawing.Point(20, 603);
             this.btnStopService.Name = "btnStopService";
-            this.btnStopService.Size = new System.Drawing.Size(89, 31);
+            this.btnStopService.Size = new System.Drawing.Size(89, 37);
             this.btnStopService.TabIndex = 3;
             this.btnStopService.Text = "Stop service";
             this.btnStopService.UseVisualStyleBackColor = true;
@@ -70,7 +71,7 @@
             // txtFilter
             // 
             this.txtFilter.ForeColor = System.Drawing.Color.Gray;
-            this.txtFilter.Location = new System.Drawing.Point(22, 13);
+            this.txtFilter.Location = new System.Drawing.Point(20, 13);
             this.txtFilter.Name = "txtFilter";
             this.txtFilter.Size = new System.Drawing.Size(165, 20);
             this.txtFilter.TabIndex = 4;
@@ -81,9 +82,9 @@
             // 
             // btnStartService
             // 
-            this.btnStartService.Location = new System.Drawing.Point(128, 490);
+            this.btnStartService.Location = new System.Drawing.Point(133, 603);
             this.btnStartService.Name = "btnStartService";
-            this.btnStartService.Size = new System.Drawing.Size(89, 31);
+            this.btnStartService.Size = new System.Drawing.Size(89, 37);
             this.btnStartService.TabIndex = 5;
             this.btnStartService.Text = "Start service";
             this.btnStartService.UseVisualStyleBackColor = true;
@@ -91,9 +92,9 @@
             // 
             // btnRestartService
             // 
-            this.btnRestartService.Location = new System.Drawing.Point(232, 490);
+            this.btnRestartService.Location = new System.Drawing.Point(244, 603);
             this.btnRestartService.Name = "btnRestartService";
-            this.btnRestartService.Size = new System.Drawing.Size(89, 31);
+            this.btnRestartService.Size = new System.Drawing.Size(89, 37);
             this.btnRestartService.TabIndex = 6;
             this.btnRestartService.Text = "Restart service";
             this.btnRestartService.UseVisualStyleBackColor = true;
@@ -102,7 +103,7 @@
             // tbxShowStopped
             // 
             this.tbxShowStopped.AutoSize = true;
-            this.tbxShowStopped.Location = new System.Drawing.Point(22, 40);
+            this.tbxShowStopped.Location = new System.Drawing.Point(20, 39);
             this.tbxShowStopped.Name = "tbxShowStopped";
             this.tbxShowStopped.Size = new System.Drawing.Size(136, 17);
             this.tbxShowStopped.TabIndex = 7;
@@ -114,7 +115,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(344, 537);
+            this.ClientSize = new System.Drawing.Size(354, 662);
             this.Controls.Add(this.tbxShowStopped);
             this.Controls.Add(this.btnRestartService);
             this.Controls.Add(this.btnStartService);
