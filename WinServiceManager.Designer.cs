@@ -63,9 +63,9 @@
             // 
             this.btnStopService.Location = new System.Drawing.Point(20, 603);
             this.btnStopService.Name = "btnStopService";
-            this.btnStopService.Size = new System.Drawing.Size(89, 37);
+            this.btnStopService.Size = new System.Drawing.Size(92, 37);
             this.btnStopService.TabIndex = 3;
-            this.btnStopService.Text = "Stop service";
+            this.btnStopService.Text = "Stop selected";
             this.btnStopService.UseVisualStyleBackColor = true;
             this.btnStopService.Click += new System.EventHandler(this.btnStopService_Click);
             // 
@@ -83,21 +83,21 @@
             // 
             // btnStartService
             // 
-            this.btnStartService.Location = new System.Drawing.Point(133, 603);
+            this.btnStartService.Location = new System.Drawing.Point(131, 603);
             this.btnStartService.Name = "btnStartService";
-            this.btnStartService.Size = new System.Drawing.Size(89, 37);
+            this.btnStartService.Size = new System.Drawing.Size(92, 37);
             this.btnStartService.TabIndex = 5;
-            this.btnStartService.Text = "Start service";
+            this.btnStartService.Text = "Start selected";
             this.btnStartService.UseVisualStyleBackColor = true;
             this.btnStartService.Click += new System.EventHandler(this.btnStartService_Click);
             // 
             // btnRestartService
             // 
-            this.btnRestartService.Location = new System.Drawing.Point(244, 603);
+            this.btnRestartService.Location = new System.Drawing.Point(241, 603);
             this.btnRestartService.Name = "btnRestartService";
-            this.btnRestartService.Size = new System.Drawing.Size(89, 37);
+            this.btnRestartService.Size = new System.Drawing.Size(92, 37);
             this.btnRestartService.TabIndex = 6;
-            this.btnRestartService.Text = "Restart service";
+            this.btnRestartService.Text = "Restart selected";
             this.btnRestartService.UseVisualStyleBackColor = true;
             this.btnRestartService.Click += new System.EventHandler(this.btnRestartService_Click);
             // 
