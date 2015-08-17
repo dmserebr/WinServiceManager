@@ -19,6 +19,8 @@ namespace WinServMgr
         #region Private fields
 
         private bool mFilterEmpty = true;
+        private List<string> mSelectedRows;
+        private Dictionary<string, int> mSelectedCells;
         private SrvController mSrvController;
         private const string InitialFilterText = "Filter..."; 
         
@@ -30,6 +32,8 @@ namespace WinServMgr
         {
             InitializeComponent();
             mSrvController = new SrvController(this);
+            mSelectedRows = new List<string>();
+            mSelectedCells = new Dictionary<string, int>();
         } 
 
         #endregion
@@ -94,10 +98,27 @@ namespace WinServMgr
         
         private void btnRefresh_Click(object sender, EventArgs e)
         {
+            SaveSelection();
             mSrvController.UpdateServiceEntries();
             RefreshGrid();
+            RestoreSelection();
             Text = string.Format("WinServiceManager [{0} active services]",
                 mSrvController.ServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
+        }
+
+        private void SaveSelection()
+        {
+            mSelectedRows.Clear();
+            mSelectedCells.Clear();
+
+            foreach (DataGridViewRow row in dgvServicesList.SelectedRows)
+            {
+                mSelectedRows.Add(GetServiceNameForRow(row));
+            }
+            foreach (DataGridViewCell cell in dgvServicesList.SelectedCells)
+            {
+                mSelectedCells[GetServiceNameForCell(cell)] = cell.ColumnIndex;
+            }
         }
 
         private void RefreshGrid()
@@ -110,6 +131,7 @@ namespace WinServMgr
                 (tbxShowStopped.Checked || s.ServiceState != ServiceControllerStatus.Stopped))
                 .ToList();
             dgvServicesList.DataSource = filteredEntries;
+            dgvServicesList.ClearSelection();
 
             AdjustColumnsWidth();
             foreach (DataGridViewRow row in dgvServicesList.Rows)
@@ -132,6 +154,22 @@ namespace WinServMgr
                 row.HeaderCell.Style.SelectionBackColor = cellColor;
             }
             dgvServicesList.Refresh();
+        }
+
+        private void RestoreSelection()
+        {
+            foreach (DataGridViewRow row in dgvServicesList.Rows)
+            {
+                string rowName = row.Cells["ServiceName"].Value as string;
+                if (mSelectedRows.Contains(rowName)) 
+                {
+                    row.Selected = true;
+                }
+                else if (mSelectedCells.ContainsKey(rowName))
+                {
+                    row.Cells[mSelectedCells[rowName]].Selected = true;
+                }
+            }
         }
 
         private void btnStopService_Click(object sender, EventArgs e)
@@ -165,7 +203,20 @@ namespace WinServMgr
 
         private string GetServiceNameForRow(DataGridViewRow row)
         {
-            return row.Cells[dgvServicesList.Columns["ServiceName"].Index].Value as string;
+            return row.Cells["ServiceName"].Value as string;
+        }
+
+        private string GetServiceNameForCell(DataGridViewCell cell)
+        {
+            if (cell.RowIndex == dgvServicesList.Columns["ServiceName"].Index)
+            {
+                return cell.Value as string;
+            }
+            else
+            {
+                var anotherCell = dgvServicesList.Rows[cell.RowIndex].Cells["ServiceName"];
+                return anotherCell.Value as string;
+            }
         }
 
         private void SMATestTool_Load(object sender, EventArgs e)
