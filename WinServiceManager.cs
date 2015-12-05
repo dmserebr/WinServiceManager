@@ -19,10 +19,11 @@ namespace WinServMgr
         #region Private fields
 
         private bool mFilterEmpty = true;
-        private List<string> mSelectedRows;
-        private Dictionary<string, int> mSelectedCells;
         private SrvController mSrvController;
-        private const string InitialFilterText = "Filter..."; 
+        private const string InitialFilterText = "Filter...";
+        private BindingList<ServiceEntry> servicesList;
+        private BindingSource servicesListBindingSource;
+
         
         #endregion
 
@@ -32,8 +33,12 @@ namespace WinServMgr
         {
             InitializeComponent();
             mSrvController = new SrvController(this);
-            mSelectedRows = new List<string>();
-            mSelectedCells = new Dictionary<string, int>();
+            servicesList = new BindingList<ServiceEntry>();
+            servicesListBindingSource = new BindingSource(servicesList, null);
+            dgvServicesList.DataSource = servicesListBindingSource;
+            dgvServicesList.RowHeadersWidth = 12;
+            dgvServicesList.Columns["ServiceState"].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+            dgvServicesList.Columns["ServiceName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         } 
 
         #endregion
@@ -98,30 +103,15 @@ namespace WinServMgr
         
         private void btnRefresh_Click(object sender, EventArgs e)
         {
-            SaveSelection();
             mSrvController.UpdateServiceEntries();
-            RefreshGrid();
-            RestoreSelection();
-            Text = string.Format("WinServiceManager [{0} active services]",
-                mSrvController.ServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
-        }
 
-        private void SaveSelection()
-        {
-            mSelectedRows.Clear();
-            mSelectedCells.Clear();
-
-            foreach (DataGridViewRow row in dgvServicesList.SelectedRows)
+            if (RefreshGrid())
             {
-                mSelectedRows.Add(GetServiceNameForRow(row));
-            }
-            foreach (DataGridViewCell cell in dgvServicesList.SelectedCells)
-            {
-                mSelectedCells[GetServiceNameForCell(cell)] = cell.ColumnIndex;
+                UpdateFormTitle();
             }
         }
 
-        private void RefreshGrid()
+        private bool RefreshGrid()
         {
             // 1. If filter is not applied, we show all services, otherwise those starting with text (case independently)
             // 2. If checkbox "Show stopped services" in checked, we show them as well
@@ -130,14 +120,48 @@ namespace WinServMgr
                 (mFilterEmpty || s.ServiceName.StartsWith(txtFilter.Text, StringComparison.CurrentCultureIgnoreCase)) &&
                 (tbxShowStopped.Checked || s.ServiceState != ServiceControllerStatus.Stopped))
                 .ToList();
-            dgvServicesList.DataSource = filteredEntries;
-            dgvServicesList.ClearSelection();
 
-            AdjustColumnsWidth();
-            foreach (DataGridViewRow row in dgvServicesList.Rows)
+            var entriesToRemove = servicesList.Except(filteredEntries).ToList();
+            foreach (var entry in entriesToRemove)
             {
+                servicesList.Remove(entry);
+            }
+
+            var newEntries = filteredEntries.Except(servicesList).ToList();
+            foreach (var entry in newEntries)
+            {
+                // Insert an entry to its place so the binding list remains alphabetically sorted
+                if (servicesList.Count == 0)
+                {
+                    servicesList.Add(entry);
+                }
+                else
+                {
+                    var elementToInsertBefore = servicesList.FirstOrDefault(e => e.ServiceName.CompareTo(entry.ServiceName) > 0);
+                    if (elementToInsertBefore != null)
+                    {
+                        servicesList.Insert(servicesList.IndexOf(elementToInsertBefore), entry);
+                    }
+                    else
+                    {
+                        servicesList.Add(entry);
+                    }
+                }
+            }
+
+            UpdateStatusColors(newEntries);
+
+            return entriesToRemove.Any() || newEntries.Any();  // true if something has changed
+        }
+
+        private void UpdateStatusColors(IEnumerable<ServiceEntry> changedEntries)
+        {
+            foreach (ServiceEntry entry in changedEntries)
+            {
+                DataGridViewRow row = dgvServicesList.Rows.Cast<DataGridViewRow>().First(r =>
+                                        r.Cells["ServiceName"].Value.ToString() == entry.ServiceName);
                 Color cellColor;
-                switch ((ServiceControllerStatus)row.Cells[dgvServicesList.Columns["ServiceState"].Index].Value)
+                switch (entry.ServiceState)
                 {
                     case ServiceControllerStatus.Running:
                         cellColor = Color.Green;
@@ -153,23 +177,12 @@ namespace WinServMgr
                 row.HeaderCell.Style.BackColor = cellColor;
                 row.HeaderCell.Style.SelectionBackColor = cellColor;
             }
-            dgvServicesList.Refresh();
         }
 
-        private void RestoreSelection()
+        private void UpdateFormTitle()
         {
-            foreach (DataGridViewRow row in dgvServicesList.Rows)
-            {
-                string rowName = row.Cells["ServiceName"].Value as string;
-                if (mSelectedRows.Contains(rowName)) 
-                {
-                    row.Selected = true;
-                }
-                else if (mSelectedCells.ContainsKey(rowName))
-                {
-                    row.Cells[mSelectedCells[rowName]].Selected = true;
-                }
-            }
+            Text = string.Format("WinServiceManager [{0} active services]",
+                        mSrvController.ServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
         }
 
         private void btnStopService_Click(object sender, EventArgs e)
@@ -206,25 +219,13 @@ namespace WinServMgr
             return row.Cells["ServiceName"].Value as string;
         }
 
-        private string GetServiceNameForCell(DataGridViewCell cell)
-        {
-            if (cell.RowIndex == dgvServicesList.Columns["ServiceName"].Index)
-            {
-                return cell.Value as string;
-            }
-            else
-            {
-                var anotherCell = dgvServicesList.Rows[cell.RowIndex].Cells["ServiceName"];
-                return anotherCell.Value as string;
-            }
-        }
-
         private void SMATestTool_Load(object sender, EventArgs e)
         {
             mSrvController.UpdateServiceEntries();
-            RefreshGrid();
-            Text = string.Format("WinServiceManager [{0} active services]",
-                mSrvController.ServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
+            if (RefreshGrid())
+            {
+                UpdateFormTitle();
+            }
         }
 
         private void txtFilter_TextChanged(object sender, EventArgs e)
@@ -262,13 +263,6 @@ namespace WinServMgr
             }
         }
 
-        private void AdjustColumnsWidth()
-        {
-            dgvServicesList.RowHeadersWidth = 12;
-            dgvServicesList.Columns["ServiceState"].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-            dgvServicesList.Columns["ServiceName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        }
-
         private void tbxShowStopped_CheckedChanged(object sender, EventArgs e)
         {
             RefreshGrid();
@@ -279,9 +273,10 @@ namespace WinServMgr
             if (e.KeyCode == Keys.F5)
             {
                 mSrvController.UpdateServiceEntries();
-                RefreshGrid();
-                Text = string.Format("WinServiceManager [{0} active services]",
-                    mSrvController.ServiceEntries.Where(s => s.ServiceState != ServiceControllerStatus.Stopped).Count());
+                if (RefreshGrid())
+                {
+                    UpdateFormTitle();
+                }
             }
         }
 
