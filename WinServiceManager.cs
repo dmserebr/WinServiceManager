@@ -151,7 +151,17 @@ namespace WinServMgr
 
             UpdateStatusColors(newEntries);
 
-            return entriesToRemove.Any() || newEntries.Any();  // true if something has changed
+            var changedEntries = filteredEntries.Where(fe => fe.StateChanged);
+            UpdateStatusColors(changedEntries);
+            foreach (ServiceEntry entry in mSrvController.ServiceEntries)
+            {
+                if (changedEntries.Contains(entry))
+                {
+                    entry.StateChanged = false;
+                }
+            }
+
+            return entriesToRemove.Any() || newEntries.Any();  // true if number of entries has changed
         }
 
         private void UpdateStatusColors(IEnumerable<ServiceEntry> changedEntries)

@@ -16,21 +16,23 @@ namespace WinServMgr
         [DisplayName("Service state")]
         public ServiceControllerStatus ServiceState { get; set; }
 
+        public bool StateChanged;
+
         public ServiceEntry(string name, ServiceControllerStatus state)
         {
             ServiceName = name;
             ServiceState = state;
+            StateChanged = true;
         }
 
         public override bool Equals(object obj)
         {
-            return ServiceName == (obj as ServiceEntry).ServiceName
-                && ServiceState == (obj as ServiceEntry).ServiceState;
+            return ServiceName == (obj as ServiceEntry).ServiceName;
         }
 
         public override int GetHashCode()
         {
-            return ServiceName.GetHashCode() ^ ServiceState.GetHashCode();
+            return ServiceName.GetHashCode();
         }
     }
 }

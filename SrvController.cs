@@ -24,12 +24,21 @@ namespace WinServMgr
         /// </summary>
         public void UpdateServiceEntries()
         {
-            ServiceEntries.Clear();
-            var services = ServiceController.GetServices();
-            foreach (ServiceController sc in services)
+            ServiceEntries.ForEach(se => se.StateChanged = false);
+            var newServicesEntries = ServiceController.GetServices().Select(sc => new ServiceEntry(sc.ServiceName, sc.Status)).ToList();
+
+            foreach (ServiceEntry se in ServiceEntries)
             {
-                ServiceEntries.Add(new ServiceEntry(sc.ServiceName, sc.Status));
+                int index = newServicesEntries.IndexOf(se);
+                if (index >= 0 && newServicesEntries[index].ServiceState != se.ServiceState)
+                {
+                    se.ServiceState = newServicesEntries[index].ServiceState;
+                    se.StateChanged = true;
+                }
             }
+
+            ServiceEntries.AddRange(newServicesEntries.Except(ServiceEntries));
+            ServiceEntries.RemoveAll(se => !newServicesEntries.Contains(se));
         }
 
         /// <summary>
