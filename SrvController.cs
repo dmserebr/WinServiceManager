@@ -10,6 +10,7 @@ namespace WinServMgr
     public class SrvController
     {
         private MainForm mMainForm;
+        private object mSrvControllerLock = new object();
 
         public SrvController(MainForm mainForm)
         {
@@ -24,21 +25,24 @@ namespace WinServMgr
         /// </summary>
         public void UpdateServiceEntries()
         {
-            ServiceEntries.ForEach(se => se.StateChanged = false);
-            var newServicesEntries = ServiceController.GetServices().Select(sc => new ServiceEntry(sc.ServiceName, sc.Status)).ToList();
-
-            foreach (ServiceEntry se in ServiceEntries)
+            lock (mSrvControllerLock)
             {
-                int index = newServicesEntries.IndexOf(se);
-                if (index >= 0 && newServicesEntries[index].ServiceState != se.ServiceState)
-                {
-                    se.ServiceState = newServicesEntries[index].ServiceState;
-                    se.StateChanged = true;
-                }
-            }
+                ServiceEntries.ForEach(se => se.StateChanged = false);
+                var newServicesEntries = ServiceController.GetServices().Select(sc => new ServiceEntry(sc.ServiceName, sc.Status)).ToList();
 
-            ServiceEntries.AddRange(newServicesEntries.Except(ServiceEntries));
-            ServiceEntries.RemoveAll(se => !newServicesEntries.Contains(se));
+                foreach (ServiceEntry se in ServiceEntries)
+                {
+                    int index = newServicesEntries.IndexOf(se);
+                    if (index >= 0 && newServicesEntries[index].ServiceState != se.ServiceState)
+                    {
+                        se.ServiceState = newServicesEntries[index].ServiceState;
+                        se.StateChanged = true;
+                    }
+                }
+
+                ServiceEntries.AddRange(newServicesEntries.Except(ServiceEntries));
+                ServiceEntries.RemoveAll(se => !newServicesEntries.Contains(se));
+            }
         }
 
         /// <summary>

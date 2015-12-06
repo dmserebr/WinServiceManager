@@ -28,14 +28,15 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.dgvServicesList = new System.Windows.Forms.DataGridView();
-            this.btnRefresh = new System.Windows.Forms.Button();
             this.btnStopService = new System.Windows.Forms.Button();
             this.txtFilter = new System.Windows.Forms.TextBox();
             this.btnStartService = new System.Windows.Forms.Button();
             this.btnRestartService = new System.Windows.Forms.Button();
             this.tbxShowStopped = new System.Windows.Forms.CheckBox();
+            this.tmrRefreshGrid = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.dgvServicesList)).BeginInit();
             this.SuspendLayout();
             // 
@@ -43,27 +44,19 @@
             // 
             this.dgvServicesList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvServicesList.EnableHeadersVisualStyles = false;
-            this.dgvServicesList.Location = new System.Drawing.Point(20, 67);
+            this.dgvServicesList.Location = new System.Drawing.Point(27, 60);
+            this.dgvServicesList.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.dgvServicesList.Name = "dgvServicesList";
-            this.dgvServicesList.Size = new System.Drawing.Size(313, 520);
+            this.dgvServicesList.Size = new System.Drawing.Size(417, 662);
             this.dgvServicesList.TabIndex = 0;
             this.dgvServicesList.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvServicesList_CellMouseClick);
             // 
-            // btnRefresh
-            // 
-            this.btnRefresh.Location = new System.Drawing.Point(227, 13);
-            this.btnRefresh.Name = "btnRefresh";
-            this.btnRefresh.Size = new System.Drawing.Size(106, 32);
-            this.btnRefresh.TabIndex = 2;
-            this.btnRefresh.Text = "Refresh (F5)";
-            this.btnRefresh.UseVisualStyleBackColor = true;
-            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
-            // 
             // btnStopService
             // 
-            this.btnStopService.Location = new System.Drawing.Point(20, 603);
+            this.btnStopService.Location = new System.Drawing.Point(27, 742);
+            this.btnStopService.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnStopService.Name = "btnStopService";
-            this.btnStopService.Size = new System.Drawing.Size(92, 37);
+            this.btnStopService.Size = new System.Drawing.Size(123, 46);
             this.btnStopService.TabIndex = 3;
             this.btnStopService.Text = "Stop selected";
             this.btnStopService.UseVisualStyleBackColor = true;
@@ -72,9 +65,10 @@
             // txtFilter
             // 
             this.txtFilter.ForeColor = System.Drawing.Color.Gray;
-            this.txtFilter.Location = new System.Drawing.Point(20, 13);
+            this.txtFilter.Location = new System.Drawing.Point(27, 16);
+            this.txtFilter.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtFilter.Name = "txtFilter";
-            this.txtFilter.Size = new System.Drawing.Size(165, 20);
+            this.txtFilter.Size = new System.Drawing.Size(218, 22);
             this.txtFilter.TabIndex = 4;
             this.txtFilter.Text = "Filter...";
             this.txtFilter.TextChanged += new System.EventHandler(this.txtFilter_TextChanged);
@@ -83,9 +77,10 @@
             // 
             // btnStartService
             // 
-            this.btnStartService.Location = new System.Drawing.Point(131, 603);
+            this.btnStartService.Location = new System.Drawing.Point(175, 742);
+            this.btnStartService.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnStartService.Name = "btnStartService";
-            this.btnStartService.Size = new System.Drawing.Size(92, 37);
+            this.btnStartService.Size = new System.Drawing.Size(123, 46);
             this.btnStartService.TabIndex = 5;
             this.btnStartService.Text = "Start selected";
             this.btnStartService.UseVisualStyleBackColor = true;
@@ -93,9 +88,10 @@
             // 
             // btnRestartService
             // 
-            this.btnRestartService.Location = new System.Drawing.Point(241, 603);
+            this.btnRestartService.Location = new System.Drawing.Point(321, 742);
+            this.btnRestartService.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnRestartService.Name = "btnRestartService";
-            this.btnRestartService.Size = new System.Drawing.Size(92, 37);
+            this.btnRestartService.Size = new System.Drawing.Size(123, 46);
             this.btnRestartService.TabIndex = 6;
             this.btnRestartService.Text = "Restart selected";
             this.btnRestartService.UseVisualStyleBackColor = true;
@@ -104,33 +100,40 @@
             // tbxShowStopped
             // 
             this.tbxShowStopped.AutoSize = true;
-            this.tbxShowStopped.Location = new System.Drawing.Point(20, 39);
+            this.tbxShowStopped.Checked = true;
+            this.tbxShowStopped.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.tbxShowStopped.Location = new System.Drawing.Point(269, 16);
+            this.tbxShowStopped.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.tbxShowStopped.Name = "tbxShowStopped";
-            this.tbxShowStopped.Size = new System.Drawing.Size(136, 17);
+            this.tbxShowStopped.Size = new System.Drawing.Size(175, 21);
             this.tbxShowStopped.TabIndex = 7;
             this.tbxShowStopped.Text = "Show stopped services";
             this.tbxShowStopped.UseVisualStyleBackColor = true;
             this.tbxShowStopped.CheckedChanged += new System.EventHandler(this.tbxShowStopped_CheckedChanged);
             // 
-            // WinServiceManager
+            // tmrRefreshGrid
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.tmrRefreshGrid.Interval = 200;
+            this.tmrRefreshGrid.Tick += new System.EventHandler(this.tmrRefreshGrid_Tick);
+            // 
+            // MainForm
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(354, 662);
+            this.ClientSize = new System.Drawing.Size(472, 815);
             this.Controls.Add(this.tbxShowStopped);
             this.Controls.Add(this.btnRestartService);
             this.Controls.Add(this.btnStartService);
             this.Controls.Add(this.txtFilter);
             this.Controls.Add(this.btnStopService);
-            this.Controls.Add(this.btnRefresh);
             this.Controls.Add(this.dgvServicesList);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
-            this.Name = "WinServiceManager";
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Name = "MainForm";
             this.Text = "WinServiceManager";
             this.Load += new System.EventHandler(this.SMATestTool_Load);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WinServiceManager_KeyDown);
             ((System.ComponentModel.ISupportInitialize)(this.dgvServicesList)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -140,7 +143,6 @@
         #endregion
 
         private System.Windows.Forms.DataGridView dgvServicesList;
-        private System.Windows.Forms.Button btnRefresh;
         private System.Windows.Forms.Button btnStopService;
         //private System.Windows.Forms.DataGridViewTextBoxColumn serviceNameDataGridViewTextBoxColumn;
         //private System.Windows.Forms.DataGridViewTextBoxColumn serviceStateDataGridViewTextBoxColumn;
@@ -148,6 +150,7 @@
         private System.Windows.Forms.Button btnStartService;
         private System.Windows.Forms.Button btnRestartService;
         private System.Windows.Forms.CheckBox tbxShowStopped;
+        private System.Windows.Forms.Timer tmrRefreshGrid;
     }
 }
 

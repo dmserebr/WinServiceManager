@@ -101,16 +101,6 @@ namespace WinServMgr
 
         #region Private members
         
-        private void btnRefresh_Click(object sender, EventArgs e)
-        {
-            mSrvController.UpdateServiceEntries();
-
-            if (RefreshGrid())
-            {
-                UpdateFormTitle();
-            }
-        }
-
         private bool RefreshGrid()
         {
             // 1. If filter is not applied, we show all services, otherwise those starting with text (case independently)
@@ -151,7 +141,7 @@ namespace WinServMgr
 
             UpdateStatusColors(newEntries);
 
-            var changedEntries = filteredEntries.Where(fe => fe.StateChanged);
+            var changedEntries = filteredEntries.Where(fe => fe.StateChanged).ToList();
             UpdateStatusColors(changedEntries);
             foreach (ServiceEntry entry in mSrvController.ServiceEntries)
             {
@@ -161,7 +151,7 @@ namespace WinServMgr
                 }
             }
 
-            return entriesToRemove.Any() || newEntries.Any();  // true if number of entries has changed
+            return entriesToRemove.Any() || newEntries.Any() || changedEntries.Any();  // true if something has changed
         }
 
         private void UpdateStatusColors(IEnumerable<ServiceEntry> changedEntries)
@@ -236,6 +226,8 @@ namespace WinServMgr
             {
                 UpdateFormTitle();
             }
+
+            tmrRefreshGrid.Enabled = true;
         }
 
         private void txtFilter_TextChanged(object sender, EventArgs e)
@@ -278,18 +270,6 @@ namespace WinServMgr
             RefreshGrid();
         }
 
-        private void WinServiceManager_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.F5)
-            {
-                mSrvController.UpdateServiceEntries();
-                if (RefreshGrid())
-                {
-                    UpdateFormTitle();
-                }
-            }
-        }
-
         private void dgvServicesList_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
@@ -322,6 +302,15 @@ namespace WinServMgr
                     var relativeMousePosition = dgvServicesList.PointToClient(Cursor.Position);
                     cm.Show(dgvServicesList, relativeMousePosition);
                 }
+            }
+        }
+
+        private void tmrRefreshGrid_Tick(object sender, EventArgs e)
+        {
+            mSrvController.UpdateServiceEntries();
+            if (RefreshGrid())
+            {
+                UpdateFormTitle();
             }
         }
 
